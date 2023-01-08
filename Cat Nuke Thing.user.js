@@ -2,7 +2,7 @@
 // @name         Cat Nuke Thing
 // @description  Nuke Thing. By Cat.
 // @namespace    http://tampermonkey.net/
-// @version      2.1.0
+// @version      2.1.1
 // @author       Cat
 // @match        https://www.nationstates.net/*
 // @include      */nday_links.html
@@ -14,7 +14,6 @@
 // ==/UserScript==
 
 
-// TODO: update target faction ID
 GM_config.init({
     'id': 'catconfig',
     'title': 'Cat Nuke Settings',
@@ -171,6 +170,8 @@ function nname() {
 }
 
 function moveFocus() {
+    document.querySelectorAll('a')[focus].style.color = "black";
+
     if (focus < document.querySelectorAll('a').length - links - 2) {
         focus += links;
     }
@@ -258,18 +259,14 @@ function udpate() {
 
         [GM_config.get("nation")], function (ev) {
             document.querySelectorAll('a')[focus].click();
-            document.querySelectorAll('a')[focus].style.color = "black";
             moveFocus()
-            document.querySelectorAll('a')[focus].style.color = "red";
 
         }
     )
 
     Mousetrap.bind(
         [GM_config.get("next")], function (ev) {
-            document.querySelectorAll('a')[focus].style.color = "black";
             moveFocus()
-            document.querySelectorAll('a')[focus].style.color = "red";
         }
     )
 
