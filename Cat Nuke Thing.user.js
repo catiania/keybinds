@@ -2,27 +2,164 @@
 // @name         Cat Nuke Thing
 // @description  Nuke Thing. By Cat.
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
+// @version      2.1.0
 // @author       Cat
 // @match        https://www.nationstates.net/*
+// @include      */nday_links.html
 // @require  https://craig.global.ssl.fastly.net/js/mousetrap/mousetrap.min.js?a4098
-// @grant        none
+// @require       https://openuserjs.org/src/libs/sizzle/GM_config.min.js
+// @grant              GM_getValue
+// @grant              GM_setValue
+// @grant        window.close
 // ==/UserScript==
 
-const faction = 212
-const reload = 'r' // Reload
-const prodNuke = 'a' // Production to nukes
-const prodShield = 'd' // Production to shields
-const shield = 's' // Press repeatedly to shield nukes
-const target = 'e' // Press repeatedly to target nations
-const launch = 't' // Press repeatedly to launch targetted nukes
-const join = 'j' // Press repeatedly to launch targetted nukes
+
+// TODO: update target faction ID
+GM_config.init({
+    'id': 'catconfig',
+    'title': 'Cat Nuke Settings',
+    'fields': {
+        'faction': {
+            'label': GM_config.create("Your Faction ID"),
+            'section': [GM_config.create("Calibration")],
+            'type': "number",
+            'default': 1,
+        },
+        'targetFaction': {
+            'label': GM_config.create("Target Faction ID"),
+            'type': "number",
+            'default': 1,
+        },
+        'targetNum': {
+            'label': GM_config.create("Number of nations in target faction"),
+            'type': "number",
+            'default': 1000,
+        },
+        'turbo': {
+            'label': GM_config.create("Turbo mode (use only if you know what you're doing)"),
+            'type': "checkbox",
+            'default': false,
+        },
+        'config': {
+            'label': GM_config.create("Open Config"),
+            'section': [GM_config.create("NS Keybinds")],
+            'type': "text",
+            'default': "c",
+        },
+        'reload': {
+            'label': GM_config.create("Reload Page"),
+            'type': "text",
+            'default': "r",
+        },
+        'prodNuke': {
+            'label': GM_config.create("Produce Nukes"),
+            'type': "character",
+            'default': "a",
+        },
+        'prodShield': {
+            'label': GM_config.create("Produce Shield"),
+            'type': "character",
+            'default': "d",
+        },
+        'shield': {
+            'label': GM_config.create("Shield Incoming"),
+            'type': "character",
+            'default': "s",
+        },
+        'target': {
+            'label': GM_config.create("Target Nation (press multiple times)"),
+            'type': "character",
+            'default': "t",
+        }, 'launch': {
+            'label': GM_config.create("Launch Nukes"),
+            'type': "character",
+            'default': "f",
+        }, 'join': {
+            'label': GM_config.create("Join Faction"),
+            'type': "character",
+            'default': "j",
+        },
+        'nation': {
+            'label': GM_config.create("Open nation and focus next"),
+            'section': [GM_config.create("Sheet Keybinds")],
+            'type': "character",
+            'default': "w",
+        }, 'next': {
+            'label': GM_config.create("Focus next"),
+            'type': "character",
+            'default': "e",
+        },
+        'prev': {
+            'label': GM_config.create("Focus previous"),
+            'type': "character",
+            'default': "q",
+        },
+    },
+    'css': "\
+#catconfig {justify-content:center; display:flex; flex-direction:row;background-color:#EAEAE2;}\     #catconfig .field_label {width:250px;display:inline-block;}\
+#catconfig_wrapper {width:50%;display:flex;flex-direction:column;align-items:center;}\
+#catconfig * {font-family: special elite,'courier 10 point',courier new,cursive,serif;}\
+#catconfig .field_label{padding:10px;text-align:right;font-weight:700;}\
+#catconfig .config_header{font-size:50px;color:#555;text-shadow:0 -1px 1px rgba(64,64,64,.5);}\
+#catconfig .section_header{background:none;color:black;font-weight:bold;border: 0px solid #555;border-bottom-width:1px;} \
+#catconfig input {padding:3px;}\
+#catconfig .section_header {margin: 10px;}\
+#catconfig .saveclose_buttons {padding:7px;}\
+#catconfig_buttons_holder{text-align:center;}\
+",
+    'events':
+    {
+        'save': function () {
+            turbo = GM_config.get("turbo");
+            udpate();
+        },
+        'init': function () {
+            var links = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "target");
+            links.forEach(function (link) {
+                link.href = link.href.replace(/start=\d+/, "start=" + Math.floor(Math.random() * (GM_config.get("targetNum") - 50)));
+                link.href = link.href.replace(/fid=\d+/, "fid=" + GM_config.get("targetFaction"));
+            });
+            links = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "join");
+            links.forEach(function (link) {
+                link.href = link.href.replace(/fid=\d+/, "fid=" + GM_config.get("faction"));
+            }
+            );
+            links = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "incoming");
+            links.forEach(function (link) {
+                link.href = link.href.replace(/fid=\d+/, "fid=" + GM_config.get("faction"));
+            }
+            );
+        }
+    }
+});
+
+var focus = 0;
+var links = 6;
+var targetNum = GM_config.get("targetNum");
+var turbo = GM_config.get("turbo");
+var faction = GM_config.get("faction");
+var target = GM_config.get("targetFaction");
+
+/**
+ * @param {string} str input string
+ * @returns true if the current url contains the input string
+ */
+function inHref(str) {
+    return window.location.href.includes(str);
+}
 
 /**
  * @returns true if we're on the production page
  */
 function onProductionPage() {
-    return inHref("page=nukes/view=production") && (!window.location.href.includes("nation=")||window.location.href.includes("container"));
+    return inHref("page=nukes/view=production") && (!inHref("nation=") || inHref("container"));
+}
+
+/**
+* @returns true if on the html sheet
+*/
+function onSheet() {
+    return inHref("nday_links.html");
 }
 
 /**
@@ -33,12 +170,12 @@ function nname() {
     return document.body.attributes[1].value;
 }
 
-/**
- * @param {string} str input string
- * @returns true if the current url contains the input string
- */
-function inHref(str) {
-    return window.location.href.includes(str);
+function moveFocus() {
+    if (focus < document.querySelectorAll('a').length - links - 2) {
+        focus += links;
+    }
+    document.querySelectorAll('a')[focus].style.color = "red";
+    document.querySelectorAll('a')[focus - 1].scrollIntoView();
 }
 
 /**
@@ -50,33 +187,147 @@ function numberFromIndicator(indicator) {
     return document.querySelector(indicator).innerText.split("\n")[0]
 }
 
+function udpate() {
+    var newNum = GM_config.get("targetNum");
+    if (newNum != targetNum && onSheet()) {
+        targetNum = newNum;
+        var links = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "target");
+        links.forEach(function (link) {
+            link.href = link.href.replace(/start=\d+/, "start=" + Math.floor(Math.random() * (targetNum - 50)));
+        });
+    }
+
+    var newTarget = GM_config.get("targetFaction");
+    if (newTarget != target && onSheet()) {
+        target = newTarget;
+        var links = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "target");
+        links.forEach(function (link) {
+            link.href = link.href.replace(/fid=\d+/, "fid=" + target);
+        });
+    }
+
+    var newFaction = GM_config.get("faction");
+    if (newFaction != faction && onSheet()) {
+        faction = newFaction;
+        var links = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "join");
+        links.forEach(function (link) {
+            link.href = link.href.replace(/fid=\d+/, "fid=" + faction);
+        });
+        links = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "incoming");
+        links.forEach(function (link) {
+            link.href = link.href.replace(/fid=\d+/, "fid=" + faction);
+        }
+        );
+    }
+}
+
 (function () {
     'use strict';
-    Mousetrap.bind([reload],
+    if (onSheet()) {
+        document.querySelectorAll('a')[focus].style.color = "red";
+        udpate();
+    } else if (turbo) {
+        if (onProductionPage()) {
+            if (document.querySelector('.button[name="convertproduction"]') === null && turbo) {
+                window.close();
+            }
+        } else if (inHref("incoming")) {
+            var message = document.querySelector("p[class=info]");
+            if (message != null && !message.innerText.includes("completely")) {
+                window.close();
+            }
+        } else if (inHref("nukes?target=")) {
+            var num = document.querySelector("span[class=nuketoken] > i[class=icon-bombs]").parentElement.innerText;
+            if (num == "0 Nukes") {
+                window.close();
+            }
+        } else if (inHref("view=targets")) {
+            var icon = document.querySelector("a[class='nukestat nukestat-targets nukestat-zero nukestat-current']");
+            if (icon != null) {
+                window.close();
+            }
+        } else if (inHref("join_faction")) {
+            var message = document.querySelector("p[class=info]");
+            if (message != null) {
+                window.close();
+            }
+        }
+    }
+
+    Mousetrap.bind(
+
+        [GM_config.get("nation")], function (ev) {
+            document.querySelectorAll('a')[focus].click();
+            document.querySelectorAll('a')[focus].style.color = "black";
+            moveFocus()
+            document.querySelectorAll('a')[focus].style.color = "red";
+
+        }
+    )
+
+    Mousetrap.bind(
+        [GM_config.get("next")], function (ev) {
+            document.querySelectorAll('a')[focus].style.color = "black";
+            moveFocus()
+            document.querySelectorAll('a')[focus].style.color = "red";
+        }
+    )
+
+    Mousetrap.bind(
+        [GM_config.get("prev")], function (ev) {
+            document.querySelectorAll('a')[focus].style.color = "black";
+            if (focus >= links) {
+                focus -= links;
+            }
+            document.querySelectorAll('a')[focus].style.color = "red";
+            if (focus > 1) { document.querySelectorAll('a')[focus - 1].scrollIntoView(); }
+        }
+    )
+
+    Mousetrap.bind(
         /**
-         * Reload the page
-         */
+        * Open Config
+        */
+        [GM_config.get("config")], function (ev) {
+            GM_config.open();
+        }, "keyup");
+
+
+    Mousetrap.bind([GM_config.get("reload")],
+        /**
+* Reload the page
+*/
         function (ev) {
             window.location.reload();
         })
-    Mousetrap.bind([prodNuke],
+    Mousetrap.bind([GM_config.get("prodNuke")],
         /**
-         * Produce nukes on your production page, or view it
-         */
+* Produce nukes on your production page, or view it
+*/
         function (ev) {
-            if (onProductionPage()) {
+            if (onSheet()) {
+                document.querySelectorAll('a')[focus + 1].click();
+                moveFocus()
+            }
+
+            else if (onProductionPage()) {
                 document.querySelector('.button[name="convertproduction"][value^="nukes"]').click();
             }
+
             else {
                 window.location.href = "https://www.nationstates.net/page=nukes/view=production";
             }
         })
-    Mousetrap.bind([prodShield],
+    Mousetrap.bind([GM_config.get("prodShield")],
         /**
-         * Produce shields on your production page, or view it
-         */
+* Produce shields on your production page, or view it
+*/
         function (ev) {
-            if (onProductionPage()) {
+            if (onSheet()) {
+                document.querySelectorAll('a')[focus + 1].click();
+                moveFocus()
+            }
+            else if (onProductionPage()) {
                 document.querySelector('.button[name="convertproduction"][value^="shield"]').click();
             }
             else {
@@ -84,12 +335,16 @@ function numberFromIndicator(indicator) {
             }
         })
 
-    Mousetrap.bind([shield],
+    Mousetrap.bind([GM_config.get("shield")],
         /**
-         * Shield a random incoming nuke, or reload if none
-         */
+* Shield a random incoming nuke, or reload if none
+*/
         function (ev) {
-            if (inHref("/view=incoming")) {
+            if (onSheet()) {
+                document.querySelectorAll('a')[focus + 2].click();
+                moveFocus()
+            }
+            else if (inHref("/view=incoming")) {
                 const buttons = document.querySelectorAll('.button[name="defend"]')
                 if (buttons.length > 0) {
                     buttons[Math.floor(Math.random() * buttons.length)].click();
@@ -101,21 +356,25 @@ function numberFromIndicator(indicator) {
             }
         })
 
-    Mousetrap.bind([target],
+    Mousetrap.bind([GM_config.get("target")],
         /**
-         * If on a faction page, view their nations. If viewing nations, view a random one that is alive.
-         *
-         * If on a nation page, target it with as many nukes as you can without overkilling.
-         */
+* If on a faction page, view their nations. If viewing nations, view a random one that is alive.
+*
+* If on a nation page, target it with as many nukes as you can without overkilling.
+*/
         function (ev) {
-            if (inHref("page=faction") && !inHref("view=nations")) {
+            if (onSheet()) {
+                document.querySelectorAll('a')[focus + 3].click();
+                moveFocus()
+            }
+            else if (inHref("page=faction") && !inHref("view=nations")) {
                 // if we're on a faction page, view their nations
                 document.querySelector('a.nukestat-nations').click();
             } else if (inHref("page=faction") && inHref("view=nations")) {
                 // if we're viewing nations, view one that is alive
 
                 let livingNationsNodeList = document.querySelectorAll("li > a.nlink");
-                let livingNations = Array.from(livingNationsNodeList).filter((nation) => {return nation.nextSibling.className!='nukedestroyedicon'});
+                let livingNations = Array.from(livingNationsNodeList).filter((nation) => { return nation.nextSibling.className != 'nukedestroyedicon' });
 
                 if (livingNations.length > 0) {
                     // if there are living nations, go to the page of a random one
@@ -138,45 +397,55 @@ function numberFromIndicator(indicator) {
                 const buttons = document.querySelectorAll('.button[name="nukes"]');
 
                 // if you can launch nukes without it being overkill, do it
-                if (total < 100 && buttons.length>0) {
+                if (buttons.length > 0) {
                     let found = false;
-                    for(let button of buttons){
-                        if(button.value<=100-total){
-                            button.click()
-                            found = true;
-                        }
+                    for (let button of buttons) {
+                        button.click()
+                        found = true;
+                        break;
                     }
-                    if(!found){
-                        buttons[buttons.length-1].click();
+                    if (!found) {
+                        buttons[buttons.length - 1].click();
                     }
-                }else{
+                } else {
                     window.location.href = document.querySelector('.factionname').href
                 }
+            } else {
+                window.location.href = "https://www.nationstates.net/page=faction/fid=" + GM_config.get("targetFaction") + "/view=nations/start=" + Math.floor(Math.random() * targetNum);
             }
         })
-    Mousetrap.bind([launch],
+    Mousetrap.bind([GM_config.get("launch")],
         /**
-         * View targets page, or if you're on it, launch the first nuke.
-         */
+* View targets page, or if you're on it, launch the first nuke.
+*/
         function (ev) {
-        if (inHref("page=nukes/view=targets") && inHref("nation=" + nname())) {
-            const ready = document.querySelector('.button[name="launch"]')
-            if (ready != null) {
-                ready.click()
-            } else {
-                window.location.reload();
+            if (onSheet()) {
+                document.querySelectorAll('a')[focus + 4].click();
+                moveFocus()
             }
-        } else {
-            window.location.href = "https://www.nationstates.net/page=nukes/view=targets";
-        }
-    })
+            // FIX THE URLS CAT
+            else if (inHref("page=nukes/view=targets") && inHref("nation=" + nname())) {
+                const ready = document.querySelector('.button[name="launch"]')
+                if (ready != null) {
+                    ready.click()
+                } else if (!turbo) {
+                    window.location.reload();
+                }
+            } else {
+                window.location.href = "https://www.nationstates.net/page=nukes/view=targets";
+            }
+        })
 
-Mousetrap.bind([join],
-               /**
-               * Join your faction!
-               */
-               function(ev){
-    window.location.href = "https://www.nationstates.net/page=faction/fid=" + 212 + "?consider_join_faction=1&join_faction=1";
-})
+    Mousetrap.bind([GM_config.get("join")],
+        /**
+* Join your faction!
+*/
+        function (ev) {
+            if (onSheet()) {
+                document.querySelectorAll('a')[focus + 5].click();
+                moveFocus()
+            }
+            else { window.location.href = "https://www.nationstates.net/page=faction/fid=" + faction + "?consider_join_faction=1&join_faction=1"; }
+        })
 
 })();
