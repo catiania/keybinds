@@ -236,7 +236,8 @@ function udpate() {
     } else if (turbo) {
         // close pages when necesary
         if (onProductionPage()) {
-            if (document.querySelector('.button[name="convertproduction"]') === null && turbo) {
+            var prod = document.querySelector(".nukestat-production").innerText
+            if (prod === "0\nPRODUCTION" || prod==="1\nPRODUCTION") {
                 window.close();
             }
         } else if (inHref("incoming")) {
