@@ -2,7 +2,7 @@
 // @name         Cat Nuke Thing
 // @description  Nuke Thing. By Cat.
 // @namespace    http://tampermonkey.net/
-// @version      2.1.3
+// @version      2.1.4
 // @author       Cat
 // @match        https://www.nationstates.net/*
 // @include      */nday_links.html
@@ -151,7 +151,7 @@ function inHref(str) {
  * @returns true if we're on the production page
  */
 function onProductionPage() {
-    return inHref("page=nukes/view=production") && (!inHref("nation=") || inHref("container"));
+    return inHref("page=nukes/view=production");
 }
 
 /**
