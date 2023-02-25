@@ -2,7 +2,7 @@
 // @name         Cat Nuke Thing
 // @description  Nuke Thing. By Cat.
 // @namespace    http://tampermonkey.net/
-// @version      2.1.1
+// @version      2.1.3
 // @author       Cat
 // @match        https://www.nationstates.net/*
 // @include      */nday_links.html
@@ -115,7 +115,7 @@ GM_config.init({
         'init': function () {
             var links = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "target");
             links.forEach(function (link) {
-                link.href = link.href.replace(/start=\d+/, "start=" + Math.floor(Math.random() * (GM_config.get("targetNum") - 50)));
+                link.href = link.href.replace(/start=\d+/, "start=" + Math.max(Math.floor(Math.random() * (GM_config.get("targetNum") - 50)),0));
                 link.href = link.href.replace(/fid=\d+/, "fid=" + GM_config.get("targetFaction"));
             });
             links = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "join");
@@ -169,6 +169,9 @@ function nname() {
     return document.body.attributes[1].value;
 }
 
+/*
+ * Move the focused puppet down one, represented by a red highlight
+ */
 function moveFocus() {
     document.querySelectorAll('a')[focus].style.color = "black";
 
@@ -188,13 +191,16 @@ function numberFromIndicator(indicator) {
     return document.querySelector(indicator).innerText.split("\n")[0]
 }
 
+/**
+ * Update the sheet if the config has been changed
+ */
 function udpate() {
     var newNum = GM_config.get("targetNum");
     if (newNum != targetNum && onSheet()) {
         targetNum = newNum;
         var links = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "target");
         links.forEach(function (link) {
-            link.href = link.href.replace(/start=\d+/, "start=" + Math.floor(Math.random() * (targetNum - 50)));
+            link.href = link.href.replace(/start=\d+/, "start=" + Math.max(Math.floor(Math.random() * (targetNum - 50)),0));
         });
     }
 
@@ -228,6 +234,7 @@ function udpate() {
         document.querySelectorAll('a')[focus].style.color = "red";
         udpate();
     } else if (turbo) {
+        // close pages when necesary
         if (onProductionPage()) {
             if (document.querySelector('.button[name="convertproduction"]') === null && turbo) {
                 window.close();
@@ -237,9 +244,9 @@ function udpate() {
             if (message != null && !message.innerText.includes("completely")) {
                 window.close();
             }
-        } else if (inHref("nukes?target=")) {
-            var num = document.querySelector("span[class=nuketoken] > i[class=icon-bombs]").parentElement.innerText;
-            if (num == "0 Nukes") {
+        } else if (inHref("page=nukes")&&document.querySelector("p[class=info]")!=null) {
+            var num = document.querySelector("span[class=nukeselfview] > a").innerText
+            if (num == "0\nNUKES") {
                 window.close();
             }
         } else if (inHref("view=targets")) {
@@ -255,23 +262,62 @@ function udpate() {
         }
     }
 
+    if (inHref("page=nukes?target=")) {
+        // calculate how much rads the nation is already getting and alert if it's over 100
+        let radiation = numberFromIndicator('.nukestat-radiation')
+        radiation = radiation.substring(0, radiation.length - 1);
+        const targeted = numberFromIndicator('.nukestat-targeted')
+        const incoming = numberFromIndicator('.nukestat-incoming')
+        const total = parseInt(targeted) + parseInt(radiation) + parseInt(incoming)
+        if(total>=100){
+             var bar = document.querySelector('.nukeiconbar')
+        var div = document.createElement('div')
+        var message = document.createElement('p')
+        message.innerText = "This nation already has 100 or more targets + radiation. Consider aiming at someone else"
+        div.style.backgroundColor= "red"
+        message.style.fontSize = "30px"
+        message.style.margin = "5px"
+        div.style.padding = "5px"
+        div.appendChild(message)
+        var fineprint = document.createElement('i')
+        fineprint.innerText = "This message has been inserted by the Cat Nuke Thing script, the devs are not yelling at you, that would be weird - Cat"
+        div.appendChild(fineprint)
+        bar.insertAdjacentElement('afterend', div)
+        }
+       
+    }
+
     Mousetrap.bind(
-
-        [GM_config.get("nation")], function (ev) {
-            document.querySelectorAll('a')[focus].click();
-            moveFocus()
-
+        [GM_config.get("nation")],
+        /**
+         * Open the nation page of a puppet on the sheet
+         */
+        function (ev) {
+            if (onSheet()) {
+                document.querySelectorAll('a')[focus].click();
+                moveFocus()
+            }
         }
     )
 
     Mousetrap.bind(
-        [GM_config.get("next")], function (ev) {
-            moveFocus()
+        [GM_config.get("next")],
+        /**
+         * Focus the next puppet on the sheet
+         */
+        function (ev) {
+            if (onSheet()) {
+                moveFocus()
+            }
         }
     )
 
     Mousetrap.bind(
-        [GM_config.get("prev")], function (ev) {
+        [GM_config.get("prev")],
+        /**
+         * Focus the previous puppet on the sheet
+         */
+        function (ev) {
             document.querySelectorAll('a')[focus].style.color = "black";
             if (focus >= links) {
                 focus -= links;
@@ -292,15 +338,15 @@ function udpate() {
 
     Mousetrap.bind([GM_config.get("reload")],
         /**
-* Reload the page
-*/
+        * Reload the page
+        */
         function (ev) {
             window.location.reload();
         })
     Mousetrap.bind([GM_config.get("prodNuke")],
         /**
-* Produce nukes on your production page, or view it
-*/
+        * Produce nukes on your production page, or view it
+        */
         function (ev) {
             if (onSheet()) {
                 document.querySelectorAll('a')[focus + 1].click();
@@ -317,8 +363,8 @@ function udpate() {
         })
     Mousetrap.bind([GM_config.get("prodShield")],
         /**
-* Produce shields on your production page, or view it
-*/
+        * Produce shields on your production page, or view it
+        */
         function (ev) {
             if (onSheet()) {
                 document.querySelectorAll('a')[focus + 1].click();
@@ -334,8 +380,8 @@ function udpate() {
 
     Mousetrap.bind([GM_config.get("shield")],
         /**
-* Shield a random incoming nuke, or reload if none
-*/
+        * Shield a random incoming nuke, or reload if none
+        */
         function (ev) {
             if (onSheet()) {
                 document.querySelectorAll('a')[focus + 2].click();
@@ -355,10 +401,10 @@ function udpate() {
 
     Mousetrap.bind([GM_config.get("target")],
         /**
-* If on a faction page, view their nations. If viewing nations, view a random one that is alive.
-*
-* If on a nation page, target it with as many nukes as you can without overkilling.
-*/
+        * If on a faction page, view their nations. If viewing nations, view a random one that is alive.
+        *
+        * If on a nation page, target it with as many nukes as you can without overkilling.
+        */
         function (ev) {
             if (onSheet()) {
                 document.querySelectorAll('a')[focus + 3].click();
@@ -384,28 +430,11 @@ function udpate() {
                     window.location.reload();
                 }
             } else if (inHref("page=nukes?target=")) {
-                // calculate how much rads the nation is already getting
-                let radiation = numberFromIndicator('.nukestat-radiation')
-                radiation = radiation.substring(0, radiation.length - 1);
-                const targeted = numberFromIndicator('.nukestat-targeted')
-                const incoming = numberFromIndicator('.nukestat-incoming')
-                const total = parseInt(targeted) + parseInt(radiation) + parseInt(incoming)
 
                 const buttons = document.querySelectorAll('.button[name="nukes"]');
 
-                // if you can launch nukes without it being overkill, do it
                 if (buttons.length > 0) {
-                    let found = false;
-                    for (let button of buttons) {
-                        button.click()
-                        found = true;
-                        break;
-                    }
-                    if (!found) {
-                        buttons[buttons.length - 1].click();
-                    }
-                } else {
-                    window.location.href = document.querySelector('.factionname').href
+                    buttons[0].click();
                 }
             } else {
                 window.location.href = "https://www.nationstates.net/page=faction/fid=" + GM_config.get("targetFaction") + "/view=nations/start=" + Math.floor(Math.random() * targetNum);
@@ -413,8 +442,8 @@ function udpate() {
         })
     Mousetrap.bind([GM_config.get("launch")],
         /**
-* View targets page, or if you're on it, launch the first nuke.
-*/
+        * View targets page, or if you're on it, launch the first nuke.
+        */
         function (ev) {
             if (onSheet()) {
                 document.querySelectorAll('a')[focus + 4].click();
@@ -435,8 +464,8 @@ function udpate() {
 
     Mousetrap.bind([GM_config.get("join")],
         /**
-* Join your faction!
-*/
+        * Join your faction!
+        */
         function (ev) {
             if (onSheet()) {
                 document.querySelectorAll('a')[focus + 5].click();
