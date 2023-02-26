@@ -2,7 +2,7 @@
 // @name         Cat Nuke Thing
 // @description  Nuke Thing. By Cat.
 // @namespace    http://tampermonkey.net/
-// @version      2.1.4
+// @version      2.2.0
 // @author       Cat
 // @match        https://www.nationstates.net/*
 // @include      */nday_links.html
@@ -238,27 +238,28 @@ function udpate() {
         if (onProductionPage()) {
             var prod = document.querySelector(".nukestat-production").innerText
             if (prod === "0\nPRODUCTION" || prod==="1\nPRODUCTION") {
-                window.close();
+               window.close();
             }
         } else if (inHref("incoming")) {
             var message = document.querySelector("p[class=info]");
-            if (message != null && !message.innerText.includes("completely")) {
-                window.close();
+            var error =document.querySelector(".error");
+            if (message != null && !message.innerText.includes("completely")||(error!=null&&document.querySelector(".error").innerText.includes("none left"))) {
+              window.close();
             }
         } else if (inHref("page=nukes")&&document.querySelector("p[class=info]")!=null) {
             var num = document.querySelector("span[class=nukeselfview] > a").innerText
             if (num == "0\nNUKES") {
-                window.close();
+               window.close();
             }
         } else if (inHref("view=targets")) {
-            var icon = document.querySelector("a[class='nukestat nukestat-targets nukestat-zero nukestat-current']");
-            if (icon != null) {
+            var icon = document.querySelector("button[class='button big icon danger']");
+            if (icon == null) {
                 window.close();
             }
         } else if (inHref("join_faction")) {
             var message = document.querySelector("p[class=info]");
             if (message != null) {
-                window.close();
+              window.close();
             }
         }
     }
