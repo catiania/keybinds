@@ -241,7 +241,7 @@ function update() {
                 window.location.href = "https://www.nationstates.net/page=nukes/view=production";
             }
         })
-    Mousetrap.bind(['s'],
+    Mousetrap.bind(['d'],
         /**
         * Produce shields on your production page, or view it
         */
