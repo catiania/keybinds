@@ -150,18 +150,18 @@ function update() {
         }
     }
 
-    if (inHref("page=nukes?target=")) {
+     if (inHref("page=nukes?target=")) {
         // calculate how much rads the nation is already getting and alert if it's over 100
         let radiation = numberFromIndicator('.nukestat-radiation')
         radiation = radiation.substring(0, radiation.length - 1);
         const targeted = numberFromIndicator('.nukestat-targeted')
         const incoming = numberFromIndicator('.nukestat-incoming')
-        const total = parseInt(targeted) + parseInt(radiation) + parseInt(incoming)
-        if(total>=100){
+        const total = parseInt(targeted) + 4*parseInt(radiation) + parseInt(incoming)
+        if(total>=400){
              var bar = document.querySelector('.nukeiconbar')
         var div = document.createElement('div')
         var message = document.createElement('p')
-        message.innerText = "This nation already has 100 or more targets + radiation. Consider aiming at someone else"
+        message.innerText = "This nation already has 400 or more targets + radiation. Consider aiming at someone else"
         div.style.backgroundColor= "red"
         message.style.fontSize = "30px"
         message.style.margin = "5px"
