@@ -296,7 +296,7 @@ function update() {
             } else if (inHref("page=faction") && inHref("view=nations")) {
                 // if we're viewing nations, view one that is alive
 
-                let livingNationsNodeList = document.querySelectorAll("li > a.nlink");
+                let livingNationsNodeList = document.querySelectorAll("ol > li > a.nlink");
                 let livingNations = Array.from(livingNationsNodeList).filter((nation) => { return nation.nextSibling.className != 'nukedestroyedicon' });
 
                 if (livingNations.length > 0) {
