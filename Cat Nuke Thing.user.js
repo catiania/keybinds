@@ -123,13 +123,13 @@ function update() {
         // close pages when necesary
         if (onProductionPage()) {
             var prod = document.querySelector(".nukestat-production").innerText
-            if (prod === "0\nPRODUCTION" || prod==="1\nPRODUCTION") {
-               window.close();
+            if (prod === "0\nPRODUCTION" || prod==="1\nPRODUCTION" || prod==="2\nPRODUCTION" || prod==="3\nPRODUCTION" || prod==="4\nPRODUCTION" || prod==="5\nPRODUCTION" ) {
+              window.close();
             }
         } else if (inHref("incoming")) {
             var message = document.querySelector("p[class=info]");
             var error =document.querySelector(".error");
-            if (message != null && !message.innerText.includes("completely")||(error!=null&&document.querySelector(".error").innerText.includes("none left"))) {
+            if (message != null && !message.innerText.includes("completely")||(error!=null&&document.querySelector(".error").innerText.includes("none left"))||(error!=null&&document.querySelector(".error").innerText.includes("when destroyed"))) {
               window.close();
             }
         } else if (inHref("page=nukes")&&document.querySelector("p[class=info]")!=null) {
