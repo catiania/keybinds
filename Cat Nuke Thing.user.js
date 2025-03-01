@@ -2,7 +2,7 @@
 // @name         Cat Nuke Thing
 // @description  Nuke Thing. By Cat.
 // @namespace    http://tampermonkey.net/
-// @version      2.4.0
+// @version      2.5.0
 // @author       Cat
 // @match        https://www.nationstates.net/*
 // @include      */nday_links.html
@@ -354,4 +354,16 @@ function update() {
             else { window.location.href = "https://www.nationstates.net/page=faction/fid=" + faction + "?consider_join_faction=1&join_faction=1"; }
         })
 
+
+    Mousetrap.bind(['h'],
+        /**
+        * Heal
+        */
+        function (ev) {
+            if (inHref("/page=nukes") && !inHref("radiation")){
+                document.querySelector('a[title="Radiation"]').click()
+            } else if (inHref("/page=nukes/view=radiation")){
+                document.querySelector("button[name='cureradiation']").click()
+            }
+        })
 })();
