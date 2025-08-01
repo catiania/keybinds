@@ -2,7 +2,7 @@
 // @name         Cat Nuke Thing
 // @description  Nuke Thing. By Cat.
 // @namespace    http://tampermonkey.net/
-// @version      2.5.0
+// @version      2.5.1
 // @author       Cat
 // @match        https://www.nationstates.net/*
 // @include      */nday_links.html
@@ -185,7 +185,7 @@ function update() {
                 document.querySelectorAll('a')[focus].click();
                 moveFocus()
             }
-        }
+        },'keyup'
     )
 
     Mousetrap.bind(
@@ -197,7 +197,7 @@ function update() {
             if (onSheet()) {
                 moveFocus()
             }
-        }
+        },'keyup'
     )
 
     Mousetrap.bind(
@@ -212,7 +212,7 @@ function update() {
             }
             document.querySelectorAll('a')[focus].style.color = "red";
             if (focus > 1) { document.querySelectorAll('a')[focus - 1].scrollIntoView(); }
-        }
+        },'keyup'
     )
 
     Mousetrap.bind(['r'],
@@ -240,7 +240,7 @@ function update() {
             else {
                 window.location.href = "https://www.nationstates.net/page=nukes/view=production";
             }
-        })
+        },'keyup')
     Mousetrap.bind(['d'],
         /**
         * Produce shields on your production page, or view it
@@ -256,7 +256,7 @@ function update() {
             else {
                 window.location.href = "https://www.nationstates.net/page=nukes/view=production";
             }
-        })
+        },'keyup')
 
     Mousetrap.bind(['s'],
         /**
@@ -277,7 +277,7 @@ function update() {
             } else {
                 window.location.href = "https://www.nationstates.net/page=faction/fid=" + faction + "/view=incoming";
             }
-        })
+        },'keyup')
 
     Mousetrap.bind(['t'],
         /**
@@ -319,7 +319,7 @@ function update() {
             } else {
                 window.location.href = "https://www.nationstates.net/page=faction/fid=" +target + "/view=nations/start=" + Math.floor(Math.random() * targetNum);
             }
-        })
+        },'keyup')
     Mousetrap.bind(['f'],
         /**
         * View targets page, or if you're on it, launch the first nuke.
@@ -340,7 +340,7 @@ function update() {
             } else {
                 window.location.href = "https://www.nationstates.net/page=nukes/view=targets";
             }
-        })
+        },'keyup')
 
     Mousetrap.bind(['j'],
         /**
@@ -352,7 +352,7 @@ function update() {
                 moveFocus()
             }
             else { window.location.href = "https://www.nationstates.net/page=faction/fid=" + faction + "?consider_join_faction=1&join_faction=1"; }
-        })
+        },'keyup')
 
 
     Mousetrap.bind(['h'],
@@ -365,5 +365,5 @@ function update() {
             } else if (inHref("/page=nukes/view=radiation")){
                 document.querySelector("button[name='cureradiation']").click()
             }
-        })
+        },'keyup')
 })();
