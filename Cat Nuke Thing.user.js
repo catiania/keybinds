@@ -2,7 +2,7 @@
 // @name         Cat Nuke Thing
 // @description  Nuke Thing. By Cat.
 // @namespace    http://tampermonkey.net/
-// @version      2.5.1
+// @version      2.5.2
 // @author       Cat
 // @match        https://www.nationstates.net/*
 // @include      */nday_links.html
@@ -24,6 +24,19 @@ var links = 6
 var oldTarget = -1
 var oldFaction = -1
 var oldTargetNum = -1
+
+function scriptId() {
+    try {
+        return `CatNukeThing2.5.2_by_Catiania__usedBy_${nname()}`;
+    } catch(e) {
+        return `CatNukeThing2.5.2_by_Catiania`;
+    }
+}
+
+function withScript(url) {
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}script=${scriptId()}&userclick=${Date.now()}`;
+}
 
 /**
  * @param {string} str input string
@@ -172,7 +185,7 @@ function update() {
         div.appendChild(fineprint)
         bar.insertAdjacentElement('afterend', div)
         }
-       
+
     }
 
     Mousetrap.bind(
@@ -238,7 +251,7 @@ function update() {
             }
 
             else {
-                window.location.href = "https://www.nationstates.net/page=nukes/view=production";
+                window.location.href = withScript("https://www.nationstates.net/page=nukes/view=production");
             }
         },'keyup')
     Mousetrap.bind(['d'],
@@ -254,7 +267,7 @@ function update() {
                 document.querySelector('.button[name="convertproduction"][value^="shield"]').click();
             }
             else {
-                window.location.href = "https://www.nationstates.net/page=nukes/view=production";
+                window.location.href = withScript("https://www.nationstates.net/page=nukes/view=production");
             }
         },'keyup')
 
@@ -275,7 +288,7 @@ function update() {
                     window.location.reload();
                 }
             } else {
-                window.location.href = "https://www.nationstates.net/page=faction/fid=" + faction + "/view=incoming";
+                window.location.href = withScript("https://www.nationstates.net/page=faction/fid=" + faction + "/view=incoming");
             }
         },'keyup')
 
@@ -304,7 +317,7 @@ function update() {
                     const tName = livingNations[Math.floor(Math.random() * livingNations.length)].href
                     tName.replace('/nation=', '');
                     tName.replace('/page=nukes', '');
-                    window.location.href = "https://www.nationstates.net/nation=" + tName + "/page=nukes?target=tName";
+                    window.location.href = withScript("https://www.nationstates.net/nation=" + tName + "/page=nukes?target=tName");
                 } else {
                     // if there aren't, reload
                     window.location.reload();
@@ -317,7 +330,7 @@ function update() {
                     buttons[0].click();
                 }
             } else {
-                window.location.href = "https://www.nationstates.net/page=faction/fid=" +target + "/view=nations/start=" + Math.floor(Math.random() * targetNum);
+                window.location.href = withScript("https://www.nationstates.net/page=faction/fid=" +target + "/view=nations/start=" + Math.floor(Math.random() * targetNum));
             }
         },'keyup')
     Mousetrap.bind(['f'],
@@ -338,7 +351,7 @@ function update() {
                     window.location.reload();
                 }
             } else {
-                window.location.href = "https://www.nationstates.net/page=nukes/view=targets";
+                window.location.href = withScript("https://www.nationstates.net/page=nukes/view=targets");
             }
         },'keyup')
 
@@ -351,7 +364,7 @@ function update() {
                 document.querySelectorAll('a')[focus + 5].click();
                 moveFocus()
             }
-            else { window.location.href = "https://www.nationstates.net/page=faction/fid=" + faction + "?consider_join_faction=1&join_faction=1"; }
+            else { window.location.href = withScript("https://www.nationstates.net/page=faction/fid=" + faction + "?consider_join_faction=1&join_faction=1"); }
         },'keyup')
 
 
