@@ -320,14 +320,31 @@ function update() {
                     window.location.href = withScript("https://www.nationstates.net/nation=" + tName + "/page=nukes?target=tName");
                 } else {
                     // if there aren't, reload
-                    window.location.reload();
+                    window.location.href = withScript("https://www.nationstates.net/page=faction/fid=" +target + "/view=nations/start=" + Math.floor(Math.random() * targetNum));
                 }
             } else if (inHref("page=nukes?target=")) {
 
                 const buttons = document.querySelectorAll('.button[name="nukes"]');
 
-                if (buttons.length > 0) {
-                    buttons[0].click();
+                let radiation = numberFromIndicator('.nukestat-radiation')
+                radiation = radiation.substring(0, radiation.length - 1);
+                const targeted = numberFromIndicator('.nukestat-targeted')
+                const incoming = numberFromIndicator('.nukestat-incoming')
+                const total = parseInt(targeted) + 4*parseInt(radiation) + parseInt(incoming)
+
+                if(total>=400){
+                    window.location.href = withScript("https://www.nationstates.net/page=faction/fid=" +target + "/view=nations/start=" + Math.floor(Math.random() * targetNum));
+                } else {
+                    if (buttons.length > 0) {
+                        let idx = 0;
+                        for (let i = 0; i < buttons.length; i++) {
+                            if (parseInt(buttons[i].value) >= 400-total) {
+                                idx = i;
+                            }
+                        }
+
+                        buttons[idx].click();
+                    }
                 }
             } else {
                 window.location.href = withScript("https://www.nationstates.net/page=faction/fid=" +target + "/view=nations/start=" + Math.floor(Math.random() * targetNum));
