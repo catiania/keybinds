@@ -98,7 +98,7 @@ function update() {
     if ((oldTargetNum != targetNum && onSheet())) {
         oldTargetNum = targetNum;
         console.log("hi")
-        var targetNums = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "target");
+        var targetNums = Array.from(document.querySelectorAll('a')).filter(a => a.textContent.toLowerCase() === "target");
         targetNums.forEach(function (link) {
             link.href = link.href.replace(/start=\d+/, "start=" + Math.max(Math.floor(Math.random() * (targetNum - 50)),0));
         });
@@ -107,7 +107,7 @@ function update() {
 
     if ((oldTarget != target && onSheet())) {
         oldTarget = target;
-        var targets = Array.from(document.querySelectorAll('a')).filter(a => a.textContent === "target");
+        var targets = Array.from(document.querySelectorAll('a')).filter(a => a.textContent.toLowerCase() === "target");
         targets.forEach(function (link) {
             link.href = link.href.replace(/fid=\d+/, "fid=" + target);
         });
