@@ -87,7 +87,7 @@ function moveFocus() {
  * @returns {string} the text of the given indicator
  */
 function numberFromIndicator(indicator) {
-    return document.querySelector(indicator).innerText.split("\n")[0]
+    return document.querySelector(indicator).innerText.split("\n")[0].replaceAll(',', '')
 }
 
 /**
