@@ -314,10 +314,9 @@ function update() {
 
                 if (livingNations.length > 0) {
                     // if there are living nations, go to the page of a random one
-                    const tName = livingNations[Math.floor(Math.random() * livingNations.length)].href
-                    tName.replace('/nation=', '');
-                    tName.replace('/page=nukes', '');
-                    window.location.href = withScript("https://www.nationstates.net/nation=" + tName + "/page=nukes?target=tName");
+                    const nationLink = livingNations[Math.floor(Math.random() * livingNations.length)];
+                    const tName = new URL(nationLink.href).pathname.match(/\/nation=([^/]+)/)[1];
+                    window.location.href = withScript(`https://www.nationstates.net/nation=${tName}/page=nukes?target=${tName}`);
                 } else {
                     // if there aren't, reload
                     window.location.reload();
